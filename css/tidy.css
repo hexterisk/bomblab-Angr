@@ -44,19 +44,19 @@ body,html
 a:link 
 {
 	text-decoration: none; 
-	color: #333;
+	color: purple;
 }
 	
 a:visited 
 {
 	text-decoration: none;
-	color: #333;
+	color: purple;
 }
 	
 a:hover 
 {
 	text-decoration: none;
-  	color: #333;
+  	color: red;
 }
 	
 a:active 
