@@ -2,7 +2,7 @@
 <html>
 <head><meta charset="utf-8" />
 
-<title>Phase 3 x86_64</title>
+<title>Phase 6 x86_64</title>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.10/require.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
@@ -13077,7 +13077,7 @@ div#notebook {
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h1 id="x86_64:-Phase-3">x86_64: Phase 3<a class="anchor-link" href="#x86_64:-Phase-3">&#182;</a></h1>
+<h2 id="x86_64:-Phase-6">x86_64: Phase 6<a class="anchor-link" href="#x86_64:-Phase-6">&#182;</a></h2>
 </div>
 </div>
 </div>
@@ -13139,12 +13139,12 @@ div#notebook {
 <div class="prompt input_prompt">In&nbsp;[3]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># The address where the symbolic execution shall begin. It is right after parsing of two numbers taken as input.</span>
-<span class="n">addr_start</span> <span class="o">=</span> <span class="mh">0x400F60</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># The address where the symbolic execution shall begin. It is the beginning of the phase_6 function.</span>
+<span class="n">addr_start</span> <span class="o">=</span> <span class="mh">0x40110B</span>
 
-<span class="c1"># The address of the return of phase_3.</span>
+<span class="c1"># The address of the return of phase_6.</span>
 <span class="c1"># We end it there so as to dump the stack and retrieve values before the stack frame is discarded.</span>
-<span class="n">addr_target</span> <span class="o">=</span> <span class="mh">0x400FC9</span>
+<span class="n">addr_target</span> <span class="o">=</span> <span class="mh">0x4011F7</span>
 
 <span class="c1"># The address of the first instruction of the explode_bomb function, which is to be avoided.</span>
 <span class="n">addr_bomb</span> <span class="o">=</span> <span class="mh">0x40143A</span>
@@ -13179,7 +13179,7 @@ div#notebook {
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>Setup the stack.</p>
+<p>Push the symbolic values to be input on the stack.</p>
 
 </div>
 </div>
@@ -13189,9 +13189,23 @@ div#notebook {
 <div class="prompt input_prompt">In&nbsp;[5]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># Push the null value,</span>
-<span class="c1"># so as to setup the stack as depicted in the pictures. </span>
-<span class="n">state</span><span class="o">.</span><span class="n">stack_push</span><span class="p">(</span><span class="mh">0x0</span><span class="p">)</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># From the stack trace show in the picture in the blog,</span>
+<span class="c1"># we know that the function allocates 4bytes per value and merges two in memory.</span>
+<span class="c1"># =&gt; For values entered to be 1, 2, 4 and 8,</span>
+<span class="c1"># Stack representation: 0x200000001</span>
+<span class="c1">#                       0x800000004</span>
+<span class="c1"># Thus, for 4 input values, two values appear on the stack.</span>
+
+<span class="c1"># Therefore, </span>
+<span class="c1"># Thus, we push three symbolic values which will appear on the stack for six values as input.</span>
+
+<span class="n">num</span> <span class="o">=</span> <span class="p">[]</span>
+
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">):</span>
+    <span class="n">num</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">claripy</span><span class="o">.</span><span class="n">BVS</span><span class="p">(</span><span class="s2">&quot;num_</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">i</span><span class="p">),</span> <span class="mi">32</span><span class="p">))</span>
+
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">):</span>
+    <span class="n">state</span><span class="o">.</span><span class="n">stack_push</span><span class="p">(</span><span class="n">num</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
 </pre></div>
 
     </div>
@@ -13202,7 +13216,7 @@ div#notebook {
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>Push the symbolic values to be input on the stack.</p>
+<p>Setup the registers according to the disassembly.</p>
 
 </div>
 </div>
@@ -13212,9 +13226,7 @@ div#notebook {
 <div class="prompt input_prompt">In&nbsp;[6]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># We push two symbolic values required as the pair-set values.</span>
-<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">):</span>
-    <span class="n">state</span><span class="o">.</span><span class="n">stack_push</span><span class="p">(</span><span class="n">claripy</span><span class="o">.</span><span class="n">BVS</span><span class="p">(</span><span class="s2">&quot;num_</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">i</span><span class="p">),</span> <span class="mi">32</span><span class="p">))</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">state</span><span class="o">.</span><span class="n">regs</span><span class="o">.</span><span class="n">r13</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">regs</span><span class="o">.</span><span class="n">rsp</span>
 </pre></div>
 
     </div>
@@ -13273,20 +13285,14 @@ div#notebook {
 
 
 <div class="output_subarea output_stream output_stderr output_text">
-<pre>WARNING | 2020-06-16 00:21:30,064 | <span class="ansi-green-fg">angr.state_plugins.symbolic_memory</span> | <span class="ansi-green-fg">The program is accessing memory or registers with an unspecified value. This could indicate unwanted behavior.</span>
-WARNING | 2020-06-16 00:21:30,066 | <span class="ansi-green-fg">angr.state_plugins.symbolic_memory</span> | <span class="ansi-green-fg">angr will cope with this by generating an unconstrained symbolic variable and continuing. You can resolve this by:</span>
-WARNING | 2020-06-16 00:21:30,066 | <span class="ansi-green-fg">angr.state_plugins.symbolic_memory</span> | <span class="ansi-green-fg">1) setting a value to the initial state</span>
-WARNING | 2020-06-16 00:21:30,067 | <span class="ansi-green-fg">angr.state_plugins.symbolic_memory</span> | <span class="ansi-green-fg">2) adding the state option ZERO_FILL_UNCONSTRAINED_{MEMORY,REGISTERS}, to make unknown regions hold null</span>
-WARNING | 2020-06-16 00:21:30,070 | <span class="ansi-green-fg">angr.state_plugins.symbolic_memory</span> | <span class="ansi-green-fg">3) adding the state option SYMBOL_FILL_UNCONSTRAINED_{MEMORY_REGISTERS}, to suppress these messages.</span>
-WARNING | 2020-06-16 00:21:30,076 | <span class="ansi-green-fg">angr.state_plugins.symbolic_memory</span> | <span class="ansi-green-fg">Filling register rax with 8 unconstrained bytes referenced from 0x400f60 (phase_3+0x1d in bomb64 (0x400f60))</span>
-WARNING | 2020-06-16 00:21:30,504 | <span class="ansi-green-fg">angr.state_plugins.symbolic_memory</span> | <span class="ansi-green-fg">Filling memory at 0x7fffffffffeffec with 4 unconstrained bytes referenced from 0x400fbe (phase_3+0x7b in bomb64 (0x400fbe))</span>
-WARNING | 2020-06-16 00:21:31,025 | <span class="ansi-green-fg">angr.state_plugins.symbolic_memory</span> | <span class="ansi-green-fg">Filling memory at 0x7fffffffffeffec with 4 unconstrained bytes referenced from 0x400fbe (phase_3+0x7b in bomb64 (0x400fbe))</span>
-WARNING | 2020-06-16 00:21:31,114 | <span class="ansi-green-fg">angr.state_plugins.symbolic_memory</span> | <span class="ansi-green-fg">Filling memory at 0x7fffffffffeffec with 4 unconstrained bytes referenced from 0x400fbe (phase_3+0x7b in bomb64 (0x400fbe))</span>
-WARNING | 2020-06-16 00:21:31,194 | <span class="ansi-green-fg">angr.state_plugins.symbolic_memory</span> | <span class="ansi-green-fg">Filling memory at 0x7fffffffffeffec with 4 unconstrained bytes referenced from 0x400fbe (phase_3+0x7b in bomb64 (0x400fbe))</span>
-WARNING | 2020-06-16 00:21:31,277 | <span class="ansi-green-fg">angr.state_plugins.symbolic_memory</span> | <span class="ansi-green-fg">Filling memory at 0x7fffffffffeffec with 4 unconstrained bytes referenced from 0x400fbe (phase_3+0x7b in bomb64 (0x400fbe))</span>
-WARNING | 2020-06-16 00:21:31,375 | <span class="ansi-green-fg">angr.state_plugins.symbolic_memory</span> | <span class="ansi-green-fg">Filling memory at 0x7fffffffffeffec with 4 unconstrained bytes referenced from 0x400fbe (phase_3+0x7b in bomb64 (0x400fbe))</span>
-WARNING | 2020-06-16 00:21:31,464 | <span class="ansi-green-fg">angr.state_plugins.symbolic_memory</span> | <span class="ansi-green-fg">Filling memory at 0x7fffffffffeffec with 4 unconstrained bytes referenced from 0x400fbe (phase_3+0x7b in bomb64 (0x400fbe))</span>
-WARNING | 2020-06-16 00:21:31,551 | <span class="ansi-green-fg">angr.state_plugins.symbolic_memory</span> | <span class="ansi-green-fg">Filling memory at 0x7fffffffffeffec with 4 unconstrained bytes referenced from 0x400fbe (phase_3+0x7b in bomb64 (0x400fbe))</span>
+<pre>WARNING | 2020-06-16 03:33:00,839 | <span class="ansi-green-fg">angr.state_plugins.symbolic_memory</span> | <span class="ansi-green-fg">The program is accessing memory or registers with an unspecified value. This could indicate unwanted behavior.</span>
+WARNING | 2020-06-16 03:33:00,839 | <span class="ansi-green-fg">angr.state_plugins.symbolic_memory</span> | <span class="ansi-green-fg">angr will cope with this by generating an unconstrained symbolic variable and continuing. You can resolve this by:</span>
+WARNING | 2020-06-16 03:33:00,840 | <span class="ansi-green-fg">angr.state_plugins.symbolic_memory</span> | <span class="ansi-green-fg">1) setting a value to the initial state</span>
+WARNING | 2020-06-16 03:33:00,840 | <span class="ansi-green-fg">angr.state_plugins.symbolic_memory</span> | <span class="ansi-green-fg">2) adding the state option ZERO_FILL_UNCONSTRAINED_{MEMORY,REGISTERS}, to make unknown regions hold null</span>
+WARNING | 2020-06-16 03:33:00,840 | <span class="ansi-green-fg">angr.state_plugins.symbolic_memory</span> | <span class="ansi-green-fg">3) adding the state option SYMBOL_FILL_UNCONSTRAINED_{MEMORY_REGISTERS}, to suppress these messages.</span>
+WARNING | 2020-06-16 03:33:00,841 | <span class="ansi-green-fg">angr.state_plugins.symbolic_memory</span> | <span class="ansi-green-fg">Filling memory at 0x7fffffffffeffe4 with 4 unconstrained bytes referenced from 0x401138 (phase_6+0x44 in bomb64 (0x401138))</span>
+WARNING | 2020-06-16 03:33:00,969 | <span class="ansi-green-fg">angr.state_plugins.symbolic_memory</span> | <span class="ansi-green-fg">Filling memory at 0x7fffffffffeffec with 4 unconstrained bytes referenced from 0x401138 (phase_6+0x44 in bomb64 (0x401138))</span>
+WARNING | 2020-06-16 03:33:01,080 | <span class="ansi-green-fg">angr.state_plugins.symbolic_memory</span> | <span class="ansi-green-fg">Filling memory at 0x7fffffffffefff4 with 4 unconstrained bytes referenced from 0x401138 (phase_6+0x44 in bomb64 (0x401138))</span>
 </pre>
 </div>
 </div>
@@ -13299,7 +13305,7 @@ WARNING | 2020-06-16 00:21:31,551 | <span class="ansi-green-fg">angr.state_plugi
 
 
 <div class="output_text output_subarea output_execute_result">
-<pre>&lt;SimulationManager with 15 active, 1 found, 2 avoid&gt;</pre>
+<pre>&lt;SimulationManager with 1 found, 740 avoid&gt;</pre>
 </div>
 
 </div>
@@ -13332,7 +13338,7 @@ WARNING | 2020-06-16 00:21:31,551 | <span class="ansi-green-fg">angr.state_plugi
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>Remove the stack setup first.</p>
+<p>We make the necessary changes in order to yield the correct output.</p>
 
 </div>
 </div>
@@ -13342,9 +13348,29 @@ WARNING | 2020-06-16 00:21:31,551 | <span class="ansi-green-fg">angr.state_plugi
 <div class="prompt input_prompt">In&nbsp;[10]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># Pop the null value we pushed to stack first,</span>
-<span class="c1"># as part of stack setup.</span>
-<span class="n">found</span><span class="o">.</span><span class="n">stack_pop</span><span class="p">()</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">answer</span> <span class="o">=</span> <span class="p">[]</span>
+
+<span class="c1"># Only 3 iterations since when we pushed the input,</span>
+<span class="c1"># the values were merged in a way that two numbers were in the same block,</span>
+<span class="c1"># at the end and the beginning.</span>
+<span class="c1"># This can be seen when each popped value is printed.</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">):</span>
+    <span class="n">curr</span> <span class="o">=</span> <span class="n">found</span><span class="o">.</span><span class="n">solver</span><span class="o">.</span><span class="n">eval</span><span class="p">(</span><span class="n">found</span><span class="o">.</span><span class="n">stack_pop</span><span class="p">())</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Popped value: </span><span class="si">{0}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">hex</span><span class="p">(</span><span class="n">curr</span><span class="p">)))</span>
+    
+    <span class="c1"># Masking is done using bit-wise operators to split the values merged in the block.</span>
+    <span class="n">lower_end</span> <span class="o">=</span> <span class="n">curr</span> <span class="o">&amp;</span> <span class="mh">0xffffffff</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Decimal number on the lower end: </span><span class="si">{0}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">lower_end</span><span class="p">))</span>
+    <span class="n">answer</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">lower_end</span><span class="p">))</span>
+    <span class="n">higher_end</span> <span class="o">=</span> <span class="n">curr</span><span class="o">&gt;&gt;</span><span class="mi">32</span> <span class="o">&amp;</span> <span class="mh">0xffffffff</span>
+    <span class="n">answer</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Decimal number on the higher end: </span><span class="si">{0}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">higher_end</span><span class="p">))</span>
+    <span class="n">answer</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">higher_end</span><span class="p">))</span>
+    <span class="n">answer</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">)</span>
+
+<span class="c1"># Removes the space in the end.</span>
+<span class="n">answer</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">answer</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+<span class="n">answer</span>
 </pre></div>
 
     </div>
@@ -13360,8 +13386,19 @@ WARNING | 2020-06-16 00:21:31,551 | <span class="ansi-green-fg">angr.state_plugi
     <div class="prompt"></div>
 
 
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>WARNING | 2020-06-16 00:21:31,673 | <span class="ansi-green-fg">angr.state_plugins.symbolic_memory</span> | <span class="ansi-green-fg">Filling memory at 0x7fffffffffeffe4 with 4 unconstrained bytes referenced from 0x400fc9 (phase_3+0x86 in bomb64 (0x400fc9))</span>
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Popped value: 0x400000003
+Decimal number on the lower end: 3
+Decimal number on the higher end: 4
+
+Popped value: 0x600000005
+Decimal number on the lower end: 5
+Decimal number on the higher end: 6
+
+Popped value: 0x200000001
+Decimal number on the lower end: 1
+Decimal number on the higher end: 2
+
 </pre>
 </div>
 </div>
@@ -13374,7 +13411,7 @@ WARNING | 2020-06-16 00:21:31,551 | <span class="ansi-green-fg">angr.state_plugi
 
 
 <div class="output_text output_subarea output_execute_result">
-<pre>&lt;BV64 Reverse(Reverse(num_1_40_32) .. mem_7fffffffffeffe4_50_32{UNINITIALIZED})&gt;</pre>
+<pre>&#39;3 4 5 6 1 2&#39;</pre>
 </div>
 
 </div>
@@ -13382,26 +13419,193 @@ WARNING | 2020-06-16 00:21:31,551 | <span class="ansi-green-fg">angr.state_plugi
 </div>
 </div>
 
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Reversing the manipulations to get the final, correct sequence of values that we need to provide as input.</p>
+
+</div>
+</div>
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
 <div class="prompt input_prompt">In&nbsp;[11]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">answer</span> <span class="o">=</span> <span class="p">[]</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">result</span> <span class="o">=</span> <span class="p">[</span><span class="mi">7</span><span class="o">-</span><span class="nb">int</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">answer</span><span class="o">.</span><span class="n">split</span><span class="p">()</span> <span class="k">if</span> <span class="n">i</span><span class="o">.</span><span class="n">isdigit</span><span class="p">()]</span>
 
-<span class="n">curr</span> <span class="o">=</span> <span class="n">found</span><span class="o">.</span><span class="n">solver</span><span class="o">.</span><span class="n">eval</span><span class="p">(</span><span class="n">found</span><span class="o">.</span><span class="n">stack_pop</span><span class="p">())</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Popped value: </span><span class="si">{0}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">hex</span><span class="p">(</span><span class="n">curr</span><span class="p">)))</span>
+<span class="n">final_answer</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+<span class="k">for</span> <span class="n">num</span> <span class="ow">in</span> <span class="n">result</span><span class="p">:</span>
+    <span class="n">final_answer</span> <span class="o">+=</span> <span class="nb">str</span><span class="p">(</span><span class="n">num</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39; &#39;</span>
 
-<span class="c1"># Masking is done using bit-wise operators to split the values merged in the block.</span>
-<span class="n">lower_end</span> <span class="o">=</span> <span class="n">curr</span> <span class="o">&amp;</span> <span class="mh">0xffffffff</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Decimal number on the lower end: </span><span class="si">{0}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">lower_end</span><span class="p">))</span>
-<span class="n">answer</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">lower_end</span><span class="p">))</span>
-<span class="n">higher_end</span> <span class="o">=</span> <span class="n">curr</span><span class="o">&gt;&gt;</span><span class="mi">32</span> <span class="o">&amp;</span> <span class="mh">0xffffffff</span>
-<span class="n">answer</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Decimal number on the higher end: </span><span class="si">{0}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">higher_end</span><span class="p">))</span>
-<span class="n">answer</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">higher_end</span><span class="p">))</span>
-<span class="n">answer</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">)</span>
+<span class="n">final_answer</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[11]:</div>
+
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>&#39;4 3 2 1 6 5&#39;</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Voilà! Yet again, there's the input we need to give to pass the sixth phase.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Alternate-Approach">Alternate Approach<a class="anchor-link" href="#Alternate-Approach">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Do the precursors.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[12]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># Load the binary.</span>
+<span class="n">project</span> <span class="o">=</span> <span class="n">angr</span><span class="o">.</span><span class="n">Project</span><span class="p">(</span><span class="s1">&#39;bomb64&#39;</span><span class="p">)</span>
+
+<span class="c1"># Init the addresses.</span>
+<span class="c1"># The address is the beginning of the phase_6 function.</span>
+<span class="n">addr_start</span> <span class="o">=</span> <span class="mh">0x4010F4</span>
+<span class="n">addr_target</span> <span class="o">=</span> <span class="mh">0x4011F7</span>
+<span class="n">addr_bomb</span> <span class="o">=</span> <span class="mh">0x40143A</span>
+
+<span class="c1"># Init a blank state.</span>
+<span class="n">state</span> <span class="o">=</span> <span class="n">project</span><span class="o">.</span><span class="n">factory</span><span class="o">.</span><span class="n">blank_state</span><span class="p">(</span><span class="n">addr</span><span class="o">=</span><span class="n">addr_start</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Define a hook to successfully return the read_six_numbers function.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[13]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># The address of the function that maps the integers to their appropriate locations in memory.</span>
+<span class="n">read_six_numbers</span> <span class="o">=</span> <span class="mh">0x040145C</span>
+
+<span class="c1"># Hook read_six_numbers function with a stub as we will write our numbers directly to memory.</span>
+<span class="n">stub_func</span> <span class="o">=</span> <span class="n">angr</span><span class="o">.</span><span class="n">SIM_PROCEDURES</span><span class="p">[</span><span class="s1">&#39;stubs&#39;</span><span class="p">][</span><span class="s1">&#39;ReturnUnconstrained&#39;</span><span class="p">]</span>
+<span class="n">project</span><span class="o">.</span><span class="n">hook</span><span class="p">(</span><span class="n">read_six_numbers</span><span class="p">,</span> <span class="n">stub_func</span><span class="p">())</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>This time we hope to directly write to the memory instead of pushing the values to the stack.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[14]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># The address of the array of numbers in the memory.</span>
+<span class="n">numbers_array</span> <span class="o">=</span> <span class="mh">0x00007fffffffdf00</span>
+
+<span class="c1"># Symbolic values instantiated and loaded in an array.</span>
+<span class="n">numbers</span> <span class="o">=</span> <span class="p">[</span><span class="n">state</span><span class="o">.</span><span class="n">solver</span><span class="o">.</span><span class="n">BVS</span><span class="p">(</span><span class="s2">&quot;num&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">),</span> <span class="mi">32</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">6</span><span class="p">)]</span>
+
+<span class="c1"># Symbolic values stored in the memory in the location of the numbers.</span>
+<span class="c1"># The data type uint8_t matching the bit size of the symbolic values.</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">6</span><span class="p">):</span>
+    <span class="n">state</span><span class="o">.</span><span class="n">mem</span><span class="p">[</span><span class="n">numbers_array</span> <span class="o">+</span> <span class="mi">4</span> <span class="o">*</span> <span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">uint32_t</span><span class="o">=</span> <span class="n">numbers</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Executing the exploration.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[15]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># Init the simulation manager.</span>
+<span class="n">simgr</span> <span class="o">=</span> <span class="n">project</span><span class="o">.</span><span class="n">factory</span><span class="o">.</span><span class="n">simulation_manager</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>
+
+<span class="c1"># Let Angr explore.</span>
+<span class="n">simgr</span><span class="o">.</span><span class="n">explore</span><span class="p">(</span><span class="n">find</span><span class="o">=</span><span class="n">addr_target</span><span class="p">,</span> <span class="n">avoid</span><span class="o">=</span><span class="n">addr_bomb</span><span class="p">,</span> <span class="n">enable_veritesting</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="c1"># Get the answer from the found state.</span>
+<span class="n">found</span> <span class="o">=</span> <span class="n">simgr</span><span class="o">.</span><span class="n">found</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+<span class="n">answer</span> <span class="o">=</span> <span class="p">[]</span>
+
+<span class="c1"># Loop to extract answers from the stack.</span>
+<span class="c1"># Takes care of reversing the manipulations in between.</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">):</span>
+    <span class="n">curr</span> <span class="o">=</span> <span class="n">found</span><span class="o">.</span><span class="n">solver</span><span class="o">.</span><span class="n">eval</span><span class="p">(</span><span class="n">found</span><span class="o">.</span><span class="n">stack_pop</span><span class="p">())</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Popped value: </span><span class="si">{0}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">hex</span><span class="p">(</span><span class="n">curr</span><span class="p">)))</span>
+    <span class="n">lower_end</span> <span class="o">=</span> <span class="n">curr</span> <span class="o">&amp;</span> <span class="mh">0xffffffff</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Decimal number on the lower end: </span><span class="si">{0}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">lower_end</span><span class="p">))</span>
+    <span class="n">answer</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="mi">7</span> <span class="o">-</span> <span class="n">lower_end</span><span class="p">))</span>
+    <span class="n">higher_end</span> <span class="o">=</span> <span class="n">curr</span><span class="o">&gt;&gt;</span><span class="mi">32</span> <span class="o">&amp;</span> <span class="mh">0xffffffff</span>
+    <span class="n">answer</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Decimal number on the higher end: </span><span class="si">{0}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">higher_end</span><span class="p">))</span>
+    <span class="n">answer</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="mi">7</span> <span class="o">-</span> <span class="n">higher_end</span><span class="p">))</span>
+    <span class="n">answer</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">)</span>
 
 <span class="c1"># Removes the space in the end.</span>
 <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">answer</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
@@ -13420,10 +13624,39 @@ WARNING | 2020-06-16 00:21:31,551 | <span class="ansi-green-fg">angr.state_plugi
     <div class="prompt"></div>
 
 
+<div class="output_subarea output_stream output_stderr output_text">
+<pre>WARNING | 2020-06-16 03:39:16,952 | <span class="ansi-green-fg">angr.state_plugins.symbolic_memory</span> | <span class="ansi-green-fg">Filling register r14 with 8 unconstrained bytes referenced from 0x4010f4 (phase_6+0x0 in bomb64 (0x4010f4))</span>
+WARNING | 2020-06-16 03:39:16,955 | <span class="ansi-green-fg">angr.state_plugins.symbolic_memory</span> | <span class="ansi-green-fg">Filling register r13 with 8 unconstrained bytes referenced from 0x4010f6 (phase_6+0x2 in bomb64 (0x4010f6))</span>
+WARNING | 2020-06-16 03:39:16,957 | <span class="ansi-green-fg">angr.state_plugins.symbolic_memory</span> | <span class="ansi-green-fg">Filling register r12 with 8 unconstrained bytes referenced from 0x4010f8 (phase_6+0x4 in bomb64 (0x4010f8))</span>
+WARNING | 2020-06-16 03:39:16,960 | <span class="ansi-green-fg">angr.state_plugins.symbolic_memory</span> | <span class="ansi-green-fg">Filling register rbp with 8 unconstrained bytes referenced from 0x4010fa (phase_6+0x6 in bomb64 (0x4010fa))</span>
+WARNING | 2020-06-16 03:39:16,963 | <span class="ansi-green-fg">angr.state_plugins.symbolic_memory</span> | <span class="ansi-green-fg">Filling register rbx with 8 unconstrained bytes referenced from 0x4010fb (phase_6+0x7 in bomb64 (0x4010fb))</span>
+WARNING | 2020-06-16 03:39:17,010 | <span class="ansi-green-fg">angr.state_plugins.symbolic_memory</span> | <span class="ansi-green-fg">Filling memory at 0x7fffffffffeff80 with 4 unconstrained bytes referenced from 0x401117 (phase_6+0x23 in bomb64 (0x401117))</span>
+WARNING | 2020-06-16 03:39:17,123 | <span class="ansi-green-fg">angr.state_plugins.symbolic_memory</span> | <span class="ansi-green-fg">Filling memory at 0x7fffffffffeff84 with 4 unconstrained bytes referenced from 0x401138 (phase_6+0x44 in bomb64 (0x401138))</span>
+WARNING | 2020-06-16 03:39:17,225 | <span class="ansi-green-fg">angr.state_plugins.symbolic_memory</span> | <span class="ansi-green-fg">Filling memory at 0x7fffffffffeff88 with 4 unconstrained bytes referenced from 0x401138 (phase_6+0x44 in bomb64 (0x401138))</span>
+WARNING | 2020-06-16 03:39:17,326 | <span class="ansi-green-fg">angr.state_plugins.symbolic_memory</span> | <span class="ansi-green-fg">Filling memory at 0x7fffffffffeff8c with 4 unconstrained bytes referenced from 0x401138 (phase_6+0x44 in bomb64 (0x401138))</span>
+WARNING | 2020-06-16 03:39:17,421 | <span class="ansi-green-fg">angr.state_plugins.symbolic_memory</span> | <span class="ansi-green-fg">Filling memory at 0x7fffffffffeff90 with 4 unconstrained bytes referenced from 0x401138 (phase_6+0x44 in bomb64 (0x401138))</span>
+WARNING | 2020-06-16 03:39:17,509 | <span class="ansi-green-fg">angr.state_plugins.symbolic_memory</span> | <span class="ansi-green-fg">Filling memory at 0x7fffffffffeff94 with 4 unconstrained bytes referenced from 0x401138 (phase_6+0x44 in bomb64 (0x401138))</span>
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
 <div class="output_subarea output_stream output_stdout output_text">
-<pre>Popped value: 0x13700000001
+<pre>Popped value: 0x400000003
+Decimal number on the lower end: 3
+Decimal number on the higher end: 4
+
+Popped value: 0x600000005
+Decimal number on the lower end: 5
+Decimal number on the higher end: 6
+
+Popped value: 0x200000001
 Decimal number on the lower end: 1
-Decimal number on the higher end: 311
+Decimal number on the higher end: 2
 
 </pre>
 </div>
@@ -13431,13 +13664,13 @@ Decimal number on the higher end: 311
 
 <div class="output_area">
 
-    <div class="prompt output_prompt">Out[11]:</div>
+    <div class="prompt output_prompt">Out[15]:</div>
 
 
 
 
 <div class="output_text output_subarea output_execute_result">
-<pre>&#39;1 311&#39;</pre>
+<pre>&#39;4 3 2 1 6 5&#39;</pre>
 </div>
 
 </div>
@@ -13445,307 +13678,6 @@ Decimal number on the higher end: 311
 </div>
 </div>
 
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<p>That's the two number combination we need to input to pass the third phase.</p>
-
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<p>Let's add a constraint to specifically reach an end with values that satisfy each case in the jump table. Add the constraint on the first value since that is used to match a case in the table.</p>
-
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<p>In the form:
-<code>state.solver.add(num_1 == x)</code>, where x is the integer value of a case out of the jump table.</p>
-
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<p>Let's put it in a loop to get the all the values.</p>
-
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
-<div class="prompt input_prompt">In&nbsp;[12]:</div>
-<div class="inner_cell">
-    <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">8</span><span class="p">):</span>
-    <span class="c1"># Load the binary.</span>
-    <span class="n">project</span> <span class="o">=</span> <span class="n">angr</span><span class="o">.</span><span class="n">Project</span><span class="p">(</span><span class="s1">&#39;bomb64&#39;</span><span class="p">)</span>
-
-    <span class="c1"># Init the addresses.</span>
-    <span class="n">addr_start</span> <span class="o">=</span> <span class="mh">0x400F60</span>
-    <span class="n">addr_target</span> <span class="o">=</span> <span class="mh">0x400FC9</span>
-    <span class="n">addr_bomb</span> <span class="o">=</span> <span class="mh">0x40143A</span>
-
-    <span class="c1"># Init a blank state.</span>
-    <span class="n">state</span> <span class="o">=</span> <span class="n">project</span><span class="o">.</span><span class="n">factory</span><span class="o">.</span><span class="n">blank_state</span><span class="p">(</span><span class="n">addr</span><span class="o">=</span><span class="n">addr_start</span><span class="p">)</span>
-
-    <span class="c1"># Setup the stack.</span>
-    <span class="n">state</span><span class="o">.</span><span class="n">stack_push</span><span class="p">(</span><span class="mh">0x0</span><span class="p">)</span>
-
-    <span class="c1"># Define the symbolic values.</span>
-    <span class="n">num_1</span> <span class="o">=</span> <span class="n">claripy</span><span class="o">.</span><span class="n">BVS</span><span class="p">(</span><span class="s2">&quot;num_1&quot;</span><span class="p">,</span> <span class="mi">32</span><span class="p">)</span>
-    <span class="n">num_2</span> <span class="o">=</span> <span class="n">claripy</span><span class="o">.</span><span class="n">BVS</span><span class="p">(</span><span class="s2">&quot;num_2&quot;</span><span class="p">,</span> <span class="mi">32</span><span class="p">)</span>
-
-    <span class="c1"># Add the constraint.</span>
-    <span class="n">state</span><span class="o">.</span><span class="n">solver</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">num_1</span> <span class="o">==</span> <span class="n">x</span><span class="p">)</span>
-
-    <span class="c1"># Push the input to the stack.</span>
-    <span class="n">state</span><span class="o">.</span><span class="n">stack_push</span><span class="p">(</span><span class="n">num_1</span><span class="p">)</span>
-    <span class="n">state</span><span class="o">.</span><span class="n">stack_push</span><span class="p">(</span><span class="n">num_2</span><span class="p">)</span>
-
-    <span class="c1"># Init the simulation manager.</span>
-    <span class="n">simgr</span> <span class="o">=</span> <span class="n">project</span><span class="o">.</span><span class="n">factory</span><span class="o">.</span><span class="n">simulation_manager</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>
-
-    <span class="c1"># Let Angr explore.</span>
-    <span class="n">simgr</span><span class="o">.</span><span class="n">explore</span><span class="p">(</span><span class="n">find</span><span class="o">=</span><span class="n">addr_target</span><span class="p">,</span> <span class="n">avoid</span><span class="o">=</span><span class="n">addr_bomb</span><span class="p">,</span> <span class="n">enable_veritesting</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-
-    <span class="c1"># Get the answer from the found state.</span>
-    <span class="n">found</span> <span class="o">=</span> <span class="n">simgr</span><span class="o">.</span><span class="n">found</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-    <span class="n">found</span><span class="o">.</span><span class="n">stack_pop</span><span class="p">()</span>
-
-    <span class="n">answer</span> <span class="o">=</span> <span class="p">[]</span>
-
-    <span class="n">curr</span> <span class="o">=</span> <span class="n">found</span><span class="o">.</span><span class="n">solver</span><span class="o">.</span><span class="n">eval</span><span class="p">(</span><span class="n">found</span><span class="o">.</span><span class="n">stack_pop</span><span class="p">())</span>
-
-    <span class="n">lower_end</span> <span class="o">=</span> <span class="n">curr</span> <span class="o">&amp;</span> <span class="mh">0xffffffff</span>
-    <span class="n">answer</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">lower_end</span><span class="p">))</span>
-    <span class="n">higher_end</span> <span class="o">=</span> <span class="n">curr</span><span class="o">&gt;&gt;</span><span class="mi">32</span> <span class="o">&amp;</span> <span class="mh">0xffffffff</span>
-    <span class="n">answer</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">)</span>
-    <span class="n">answer</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">higher_end</span><span class="p">))</span>
-    <span class="n">answer</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">)</span>
-
-    <span class="c1"># Removes the space in the end.</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">answer</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]))</span>
-</pre></div>
-
-    </div>
-</div>
-</div>
-
-<div class="output_wrapper">
-<div class="output">
-
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>WARNING | 2020-06-16 00:21:33,850 | <span class="ansi-green-fg">angr.state_plugins.symbolic_memory</span> | <span class="ansi-green-fg">Filling register rax with 8 unconstrained bytes referenced from 0x400f60 (phase_3+0x1d in bomb64 (0x400f60))</span>
-WARNING | 2020-06-16 00:21:34,082 | <span class="ansi-green-fg">angr.state_plugins.symbolic_memory</span> | <span class="ansi-green-fg">Filling memory at 0x7fffffffffeffec with 4 unconstrained bytes referenced from 0x400fbe (phase_3+0x7b in bomb64 (0x400fbe))</span>
-WARNING | 2020-06-16 00:21:34,177 | <span class="ansi-green-fg">angr.state_plugins.symbolic_memory</span> | <span class="ansi-green-fg">Filling memory at 0x7fffffffffeffe4 with 4 unconstrained bytes referenced from 0x400fc9 (phase_3+0x86 in bomb64 (0x400fc9))</span>
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>0 207
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>WARNING | 2020-06-16 00:21:36,298 | <span class="ansi-green-fg">angr.state_plugins.symbolic_memory</span> | <span class="ansi-green-fg">Filling register rax with 8 unconstrained bytes referenced from 0x400f60 (phase_3+0x1d in bomb64 (0x400f60))</span>
-WARNING | 2020-06-16 00:21:36,525 | <span class="ansi-green-fg">angr.state_plugins.symbolic_memory</span> | <span class="ansi-green-fg">Filling memory at 0x7fffffffffeffec with 4 unconstrained bytes referenced from 0x400fbe (phase_3+0x7b in bomb64 (0x400fbe))</span>
-WARNING | 2020-06-16 00:21:36,608 | <span class="ansi-green-fg">angr.state_plugins.symbolic_memory</span> | <span class="ansi-green-fg">Filling memory at 0x7fffffffffeffe4 with 4 unconstrained bytes referenced from 0x400fc9 (phase_3+0x86 in bomb64 (0x400fc9))</span>
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>1 311
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>WARNING | 2020-06-16 00:21:39,952 | <span class="ansi-green-fg">angr.state_plugins.symbolic_memory</span> | <span class="ansi-green-fg">Filling register rax with 8 unconstrained bytes referenced from 0x400f60 (phase_3+0x1d in bomb64 (0x400f60))</span>
-WARNING | 2020-06-16 00:21:40,400 | <span class="ansi-green-fg">angr.state_plugins.symbolic_memory</span> | <span class="ansi-green-fg">Filling memory at 0x7fffffffffeffec with 4 unconstrained bytes referenced from 0x400fbe (phase_3+0x7b in bomb64 (0x400fbe))</span>
-WARNING | 2020-06-16 00:21:40,518 | <span class="ansi-green-fg">angr.state_plugins.symbolic_memory</span> | <span class="ansi-green-fg">Filling memory at 0x7fffffffffeffe4 with 4 unconstrained bytes referenced from 0x400fc9 (phase_3+0x86 in bomb64 (0x400fc9))</span>
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>2 707
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>WARNING | 2020-06-16 00:21:43,575 | <span class="ansi-green-fg">angr.state_plugins.symbolic_memory</span> | <span class="ansi-green-fg">Filling register rax with 8 unconstrained bytes referenced from 0x400f60 (phase_3+0x1d in bomb64 (0x400f60))</span>
-WARNING | 2020-06-16 00:21:43,807 | <span class="ansi-green-fg">angr.state_plugins.symbolic_memory</span> | <span class="ansi-green-fg">Filling memory at 0x7fffffffffeffec with 4 unconstrained bytes referenced from 0x400fbe (phase_3+0x7b in bomb64 (0x400fbe))</span>
-WARNING | 2020-06-16 00:21:43,881 | <span class="ansi-green-fg">angr.state_plugins.symbolic_memory</span> | <span class="ansi-green-fg">Filling memory at 0x7fffffffffeffe4 with 4 unconstrained bytes referenced from 0x400fc9 (phase_3+0x86 in bomb64 (0x400fc9))</span>
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>3 256
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>WARNING | 2020-06-16 00:21:46,728 | <span class="ansi-green-fg">angr.state_plugins.symbolic_memory</span> | <span class="ansi-green-fg">Filling register rax with 8 unconstrained bytes referenced from 0x400f60 (phase_3+0x1d in bomb64 (0x400f60))</span>
-WARNING | 2020-06-16 00:21:46,997 | <span class="ansi-green-fg">angr.state_plugins.symbolic_memory</span> | <span class="ansi-green-fg">Filling memory at 0x7fffffffffeffec with 4 unconstrained bytes referenced from 0x400fbe (phase_3+0x7b in bomb64 (0x400fbe))</span>
-WARNING | 2020-06-16 00:21:47,088 | <span class="ansi-green-fg">angr.state_plugins.symbolic_memory</span> | <span class="ansi-green-fg">Filling memory at 0x7fffffffffeffe4 with 4 unconstrained bytes referenced from 0x400fc9 (phase_3+0x86 in bomb64 (0x400fc9))</span>
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>4 389
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>WARNING | 2020-06-16 00:21:50,308 | <span class="ansi-green-fg">angr.state_plugins.symbolic_memory</span> | <span class="ansi-green-fg">Filling register rax with 8 unconstrained bytes referenced from 0x400f60 (phase_3+0x1d in bomb64 (0x400f60))</span>
-WARNING | 2020-06-16 00:21:50,638 | <span class="ansi-green-fg">angr.state_plugins.symbolic_memory</span> | <span class="ansi-green-fg">Filling memory at 0x7fffffffffeffec with 4 unconstrained bytes referenced from 0x400fbe (phase_3+0x7b in bomb64 (0x400fbe))</span>
-WARNING | 2020-06-16 00:21:50,735 | <span class="ansi-green-fg">angr.state_plugins.symbolic_memory</span> | <span class="ansi-green-fg">Filling memory at 0x7fffffffffeffe4 with 4 unconstrained bytes referenced from 0x400fc9 (phase_3+0x86 in bomb64 (0x400fc9))</span>
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>5 206
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>WARNING | 2020-06-16 00:21:53,950 | <span class="ansi-green-fg">angr.state_plugins.symbolic_memory</span> | <span class="ansi-green-fg">Filling register rax with 8 unconstrained bytes referenced from 0x400f60 (phase_3+0x1d in bomb64 (0x400f60))</span>
-WARNING | 2020-06-16 00:21:54,201 | <span class="ansi-green-fg">angr.state_plugins.symbolic_memory</span> | <span class="ansi-green-fg">Filling memory at 0x7fffffffffeffec with 4 unconstrained bytes referenced from 0x400fbe (phase_3+0x7b in bomb64 (0x400fbe))</span>
-WARNING | 2020-06-16 00:21:54,289 | <span class="ansi-green-fg">angr.state_plugins.symbolic_memory</span> | <span class="ansi-green-fg">Filling memory at 0x7fffffffffeffe4 with 4 unconstrained bytes referenced from 0x400fc9 (phase_3+0x86 in bomb64 (0x400fc9))</span>
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>6 682
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>WARNING | 2020-06-16 00:21:56,242 | <span class="ansi-green-fg">angr.state_plugins.symbolic_memory</span> | <span class="ansi-green-fg">Filling register rax with 8 unconstrained bytes referenced from 0x400f60 (phase_3+0x1d in bomb64 (0x400f60))</span>
-WARNING | 2020-06-16 00:21:56,619 | <span class="ansi-green-fg">angr.state_plugins.symbolic_memory</span> | <span class="ansi-green-fg">Filling memory at 0x7fffffffffeffec with 4 unconstrained bytes referenced from 0x400fbe (phase_3+0x7b in bomb64 (0x400fbe))</span>
-WARNING | 2020-06-16 00:21:56,755 | <span class="ansi-green-fg">angr.state_plugins.symbolic_memory</span> | <span class="ansi-green-fg">Filling memory at 0x7fffffffffeffe4 with 4 unconstrained bytes referenced from 0x400fc9 (phase_3+0x86 in bomb64 (0x400fc9))</span>
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>7 327
-</pre>
-</div>
-</div>
-
-</div>
-</div>
-
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<p>And there we go. Values to satisfy all the cases in the jumptable.</p>
-
-</div>
-</div>
 </div>
     </div>
   </div>

@@ -13189,8 +13189,16 @@ div#notebook {
 <div class="prompt input_prompt">In&nbsp;[5]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># We push six symbolic values since we know it takes six values as input.</span>
-<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">6</span><span class="p">):</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># From the stack trace show in the picture in the blog,</span>
+<span class="c1"># we know that the function allocates 4bytes per value and merges two in memory.</span>
+<span class="c1"># =&gt; For values entered to be 1, 2, 4 and 8,</span>
+<span class="c1"># Stack representation: 0x200000001</span>
+<span class="c1">#                       0x800000004</span>
+<span class="c1"># Thus, for 4 input values, two values appear on the stack.</span>
+
+<span class="c1"># Therefore, </span>
+<span class="c1"># Thus, we push three symbolic values which will appear on the stack for six values as input.</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">):</span>
     <span class="n">state</span><span class="o">.</span><span class="n">stack_push</span><span class="p">(</span><span class="n">claripy</span><span class="o">.</span><span class="n">BVS</span><span class="p">(</span><span class="s2">&quot;num_</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">i</span><span class="p">),</span> <span class="mi">32</span><span class="p">))</span>
 </pre></div>
 
@@ -13250,14 +13258,14 @@ div#notebook {
 
 
 <div class="output_subarea output_stream output_stderr output_text">
-<pre>WARNING | 2020-06-15 04:18:52,625 | <span class="ansi-green-fg">angr.state_plugins.symbolic_memory</span> | <span class="ansi-green-fg">The program is accessing memory or registers with an unspecified value. This could indicate unwanted behavior.</span>
-WARNING | 2020-06-15 04:18:52,626 | <span class="ansi-green-fg">angr.state_plugins.symbolic_memory</span> | <span class="ansi-green-fg">angr will cope with this by generating an unconstrained symbolic variable and continuing. You can resolve this by:</span>
-WARNING | 2020-06-15 04:18:52,626 | <span class="ansi-green-fg">angr.state_plugins.symbolic_memory</span> | <span class="ansi-green-fg">1) setting a value to the initial state</span>
-WARNING | 2020-06-15 04:18:52,627 | <span class="ansi-green-fg">angr.state_plugins.symbolic_memory</span> | <span class="ansi-green-fg">2) adding the state option ZERO_FILL_UNCONSTRAINED_{MEMORY,REGISTERS}, to make unknown regions hold null</span>
-WARNING | 2020-06-15 04:18:52,627 | <span class="ansi-green-fg">angr.state_plugins.symbolic_memory</span> | <span class="ansi-green-fg">3) adding the state option SYMBOL_FILL_UNCONSTRAINED_{MEMORY_REGISTERS}, to suppress these messages.</span>
-WARNING | 2020-06-15 04:18:52,628 | <span class="ansi-green-fg">angr.state_plugins.symbolic_memory</span> | <span class="ansi-green-fg">Filling memory at 0x7fffffffffeffcc with 4 unconstrained bytes referenced from 0x400f1c (phase_2+0x20 in bomb64 (0x400f1c))</span>
-WARNING | 2020-06-15 04:18:52,799 | <span class="ansi-green-fg">angr.state_plugins.symbolic_memory</span> | <span class="ansi-green-fg">Filling memory at 0x7fffffffffeffd4 with 4 unconstrained bytes referenced from 0x400f1c (phase_2+0x20 in bomb64 (0x400f1c))</span>
-WARNING | 2020-06-15 04:18:52,924 | <span class="ansi-green-fg">angr.state_plugins.symbolic_memory</span> | <span class="ansi-green-fg">Filling memory at 0x7fffffffffeffdc with 4 unconstrained bytes referenced from 0x400f1c (phase_2+0x20 in bomb64 (0x400f1c))</span>
+<pre>WARNING | 2020-06-16 00:19:09,048 | <span class="ansi-green-fg">angr.state_plugins.symbolic_memory</span> | <span class="ansi-green-fg">The program is accessing memory or registers with an unspecified value. This could indicate unwanted behavior.</span>
+WARNING | 2020-06-16 00:19:09,049 | <span class="ansi-green-fg">angr.state_plugins.symbolic_memory</span> | <span class="ansi-green-fg">angr will cope with this by generating an unconstrained symbolic variable and continuing. You can resolve this by:</span>
+WARNING | 2020-06-16 00:19:09,052 | <span class="ansi-green-fg">angr.state_plugins.symbolic_memory</span> | <span class="ansi-green-fg">1) setting a value to the initial state</span>
+WARNING | 2020-06-16 00:19:09,052 | <span class="ansi-green-fg">angr.state_plugins.symbolic_memory</span> | <span class="ansi-green-fg">2) adding the state option ZERO_FILL_UNCONSTRAINED_{MEMORY,REGISTERS}, to make unknown regions hold null</span>
+WARNING | 2020-06-16 00:19:09,053 | <span class="ansi-green-fg">angr.state_plugins.symbolic_memory</span> | <span class="ansi-green-fg">3) adding the state option SYMBOL_FILL_UNCONSTRAINED_{MEMORY_REGISTERS}, to suppress these messages.</span>
+WARNING | 2020-06-16 00:19:09,054 | <span class="ansi-green-fg">angr.state_plugins.symbolic_memory</span> | <span class="ansi-green-fg">Filling memory at 0x7fffffffffeffe4 with 4 unconstrained bytes referenced from 0x400f1c (phase_2+0x20 in bomb64 (0x400f1c))</span>
+WARNING | 2020-06-16 00:19:09,262 | <span class="ansi-green-fg">angr.state_plugins.symbolic_memory</span> | <span class="ansi-green-fg">Filling memory at 0x7fffffffffeffec with 4 unconstrained bytes referenced from 0x400f1c (phase_2+0x20 in bomb64 (0x400f1c))</span>
+WARNING | 2020-06-16 00:19:09,458 | <span class="ansi-green-fg">angr.state_plugins.symbolic_memory</span> | <span class="ansi-green-fg">Filling memory at 0x7fffffffffefff4 with 4 unconstrained bytes referenced from 0x400f1c (phase_2+0x20 in bomb64 (0x400f1c))</span>
 </pre>
 </div>
 </div>
@@ -13325,7 +13333,8 @@ WARNING | 2020-06-15 04:18:52,924 | <span class="ansi-green-fg">angr.state_plugi
     <span class="n">answer</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">higher_end</span><span class="p">))</span>
     <span class="n">answer</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">)</span>
 
-<span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">answer</span><span class="p">)</span>
+<span class="c1"># Removes the space in the end.</span>
+<span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">answer</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
 </pre></div>
 
     </div>
@@ -13366,7 +13375,7 @@ Decimal number on the higher end: 32
 
 
 <div class="output_text output_subarea output_execute_result">
-<pre>&#39;1 2 4 8 16 32 &#39;</pre>
+<pre>&#39;1 2 4 8 16 32&#39;</pre>
 </div>
 
 </div>
@@ -13378,7 +13387,7 @@ Decimal number on the higher end: 32
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>Voilà! Yet again, there's the input we need to give to pass the second phase.</p>
+<p>That's the number sequence to be input to pass the second phase.</p>
 
 </div>
 </div>
@@ -13390,19 +13399,6 @@ Decimal number on the higher end: 32
 
 </div>
 </div>
-</div>
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
-<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
-<div class="inner_cell">
-    <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span> 
-</pre></div>
-
-    </div>
-</div>
-</div>
-
 </div>
     </div>
   </div>
